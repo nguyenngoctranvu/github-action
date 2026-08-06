@@ -1,0 +1,13 @@
+{
+  "name": "github-action-demo",
+  "version": "1.0.0",
+  "description": "Sample app for learning GitHub Actions CI/CD (test -> build -> deploy to GitHub Pages)",
+  "main": "src/math.js",
+  "scripts": {
+    "test": "jest",
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
