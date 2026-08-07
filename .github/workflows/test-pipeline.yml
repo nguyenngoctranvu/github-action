@@ -1,6 +1,6 @@
 # CI/CD pipeline: test -> build -> deploy (to GitHub Pages)
 
-name: CI
+name: CI1
 
 on:
   push:
