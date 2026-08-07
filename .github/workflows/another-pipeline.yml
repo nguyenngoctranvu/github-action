@@ -1,0 +1,8 @@
+name: CI                    # workflow name (shown in Actions tab)
+on: [push]                  # event trigger
+
+jobs:
+  build:                    # job id
+    runs-on: ubuntu-latest  # runner
+    steps:
+      - run: echo "Hello from GitHub Actions"
