@@ -15,3 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "deploying"
+  
+  post-deploy:
+    needs: deploy
+    runs-on: alpine
+    steps:
+      - run: echo "post deploy"
