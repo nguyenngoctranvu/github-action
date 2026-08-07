@@ -1,8 +1,16 @@
-name: CI                    # workflow name (shown in Actions tab)
-on: [push]                  # event trigger
+name: My first pipeline on github ci
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
-  build:                    # job id
-    runs-on: ubuntu-latest  # runner
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - run: echo "Hello from GitHub Actions"
+      - uses: actions/checkout@v5      # clones your repo into the runner
+      - uses: actions/setup-node@v5    # installs Node
+        with:
+          node-version: 24
+      - run: npm ci                    # install deps
+      - run: npm test                  # run tests
