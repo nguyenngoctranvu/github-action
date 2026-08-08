@@ -15,3 +15,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm test
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "deploying"
