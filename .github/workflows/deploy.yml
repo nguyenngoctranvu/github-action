@@ -17,6 +17,18 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+      - name: Require green CI on this SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          conclusion=$(gh run list \
+            --workflow=CI --branch=main \
+            --commit=${{ github.sha }} \
+            --json conclusion --jq '.[0].conclusion')
+          if [ "$conclusion" != "success" ]; then
+            echo "CI not green for $GITHUB_SHA (got: $conclusion)"; exit 1
+          fi
       - run: npm ci
       - run: npm run build
       - run: echo "Deploying"
