@@ -1,16 +1,14 @@
-name: CI/CD
+name: CI
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:        # manual trigger for deploy
 
 permissions:
   contents: read
 
 jobs:
   test:
-    # runs on push AND on manual dispatch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,15 +19,11 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
       - run: npm test
 
-  deploy:
-    # manual only: skipped on push, runs on workflow_dispatch
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    needs: test                    # still gated on tests passing
+  build:
+    needs: test
     runs-on: ubuntu-latest
-    # environment: production        # add required reviewers here for approval gate
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,4 +34,3 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: echo "Deploying to production"
