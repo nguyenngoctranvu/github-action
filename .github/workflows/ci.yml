@@ -1,36 +1,41 @@
-name: CI
+name: Context Explorer
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Optional note for this run'
+        type: string
+        default: 'debug run'
 
 permissions:
   contents: read
 
 jobs:
-  test:
+  inspect:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm test
+      - name: Dump entire github context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
 
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+      - name: Dump selected contexts
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+          RUNNER_CONTEXT: ${{ toJSON(runner) }}
+          INPUTS_CONTEXT: ${{ toJSON(inputs) }}
+        run: |
+          echo "---- job ----";    echo "$JOB_CONTEXT"
+          echo "---- runner ----"; echo "$RUNNER_CONTEXT"
+          echo "---- inputs ----"; echo "$INPUTS_CONTEXT"
+
+      - name: Read individual fields
+        run: |
+          echo "Triggered by : ${{ github.event_name }}"
+          echo "Actor        : ${{ github.actor }}"
+          echo "Ref          : ${{ github.ref }}"
+          echo "SHA          : ${{ github.sha }}"
+          echo "Run ID       : ${{ github.run_id }}"
+          echo "Note input   : ${{ inputs.note }}"
+          echo "Runner OS    : ${{ runner.os }}"
