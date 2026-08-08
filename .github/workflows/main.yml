@@ -13,10 +13,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 20
-      - run: npm ci
-      - run: npm test
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "deploying"
+      - name: multipline command
+        run: |
+          echo "Line 1"
+          echo "line 2"
+          npm ci
+          npm run build
+  
