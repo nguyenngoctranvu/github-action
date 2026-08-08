@@ -14,9 +14,9 @@ jobs:
         with:
           node-version: 20
       - name: multipline command
-        run: |
-          echo "Line 1"
-          echo "line 2"
-          npm ci
-          npm run build
+        run: >
+          docker build
+          --tag app:latest
+          --build-arg ENV=prod
+          .
   
