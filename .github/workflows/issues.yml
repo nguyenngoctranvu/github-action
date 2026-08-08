@@ -1,0 +1,30 @@
+name: Issue Context
+
+on:
+  issues:
+    types: [opened, edited, labeled, closed, reopened]
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  echo-context:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump full github context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Issue metadata
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          echo "Event action : ${{ github.event.action }}"
+          echo "Issue number : ${{ github.event.issue.number }}"
+          echo "Issue title  : $ISSUE_TITLE"
+          echo "Opened by    : ${{ github.event.issue.user.login }}"
+          echo "Actor        : ${{ github.actor }}"
+          echo "Label (if any): ${{ github.event.label.name }}"

@@ -1,41 +1,51 @@
-name: Context Explorer
+name: CI
 
 on:
-  workflow_dispatch:
-    inputs:
-      note:
-        description: 'Optional note for this run'
-        type: string
-        default: 'debug run'
+  push:
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
-  inspect:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Dump entire github context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
 
-      - name: Dump selected contexts
-        env:
-          JOB_CONTEXT: ${{ toJSON(job) }}
-          RUNNER_CONTEXT: ${{ toJSON(runner) }}
-          INPUTS_CONTEXT: ${{ toJSON(inputs) }}
-        run: |
-          echo "---- job ----";    echo "$JOB_CONTEXT"
-          echo "---- runner ----"; echo "$RUNNER_CONTEXT"
-          echo "---- inputs ----"; echo "$INPUTS_CONTEXT"
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
 
-      - name: Read individual fields
-        run: |
-          echo "Triggered by : ${{ github.event_name }}"
-          echo "Actor        : ${{ github.actor }}"
-          echo "Ref          : ${{ github.ref }}"
-          echo "SHA          : ${{ github.sha }}"
-          echo "Run ID       : ${{ github.run_id }}"
-          echo "Note input   : ${{ inputs.note }}"
-          echo "Runner OS    : ${{ runner.os }}"
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: echo "Deploying"
