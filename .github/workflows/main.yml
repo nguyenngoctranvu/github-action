@@ -3,30 +3,15 @@ name: CI/CD
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:        # manual trigger for deploy
 
 permissions:
-  contents: read          # least-privilege default
+  contents: read
 
 jobs:
   test:
+    # runs on push AND on manual dispatch
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci          # ci, not install — respects lockfile
-      - run: npm run build
-      - run: npm test
-
-  deploy:
-    runs-on: ubuntu-latest
-    # PARALLEL as requested: no `needs`, runs alongside test
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,4 +22,22 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: echo "deploy here"
+      - run: npm test
+
+  deploy:
+    # manual only: skipped on push, runs on workflow_dispatch
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: test                    # still gated on tests passing
+    runs-on: ubuntu-latest
+    environment: production        # add required reviewers here for approval gate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: echo "Deploying to production"
