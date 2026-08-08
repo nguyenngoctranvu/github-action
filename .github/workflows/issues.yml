@@ -1,30 +1,75 @@
-name: Issue Context
+name: CI/CD with Artifacts
 
 on:
-  issues:
-    types: [opened, edited, labeled, closed, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
-  issues: read
 
 jobs:
-  echo-context:
+  # 1. Build once — produce dist/, hand it off as an artifact
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Dump full github context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build            # produces ./dist
 
-      - name: Issue metadata
-        env:
-          ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
-        run: |
-          echo "Event action : ${{ github.event.action }}"
-          echo "Issue number : ${{ github.event.issue.number }}"
-          echo "Issue title  : $ISSUE_TITLE"
-          echo "Opened by    : ${{ github.event.issue.user.login }}"
-          echo "Actor        : ${{ github.actor }}"
-          echo "Label (if any): ${{ github.event.label.name }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: website-dist
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  # 2. Test the SAME build output, plus publish a report
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist/                 # reuse build output, don't rebuild
+
+      - run: npm test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}       # upload report even if tests fail
+        with:
+          name: test-report
+          path: |
+            coverage/
+            test-results/**/*.xml
+          if-no-files-found: warn
+
+  # 3. Deploy the exact tested bytes
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist/
+
+      - run: |
+          ls -R dist
+          echo "Deploying the exact artifact that was built and tested"
